@@ -212,14 +212,10 @@ Status verifyJwtWithoutTimeChecking(const Jwt& jwt, const Jwks& jwks) {
   std::string signed_data =
       jwt.header_str_base64url_ + '.' + jwt.payload_str_base64url_;
   bool kid_alg_matched = false;
-  for (const auto& jwk : jwks.keys()) {
-    // If kid is specified in JWT, JWK with the same kid is used for
-    // verification.
-    // If kid is not specified in JWT, try all JWK.
-    if (!jwt.kid_.empty() && !jwk->kid_.empty() && jwk->kid_ != jwt.kid_) {
-      continue;
-    }
 
+  // If kid is specified in JWT, JWK with the same kid is used for verification.
+  // If kid is not specified in JWT, try all JWK.
+  for (const auto& jwk : jwks.keys(jwt.kid_)) {
     // The same alg must be used.
     if (!jwk->alg_.empty() && jwk->alg_ != jwt.alg_) {
       continue;

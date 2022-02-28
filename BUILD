@@ -23,7 +23,10 @@ cc_library(
         "jwt_verify_lib/verify.h",
     ],
     deps = [
+        "//external:abseil_flat_hash_map",
         "//external:abseil_flat_hash_set",
+        "//external:abseil_inlined_vector",
+        "//external:abseil_span",
         "//external:abseil_strings",
         "//external:abseil_time",
         "//external:protobuf",
@@ -151,8 +154,8 @@ cc_test(
     name = "jwt_time_test",
     timeout = "short",
     srcs = [
-        "test/test_common.h",
         "test/jwt_time_test.cc",
+        "test/test_common.h",
     ],
     linkopts = [
         "-lm",

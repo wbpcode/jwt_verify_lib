@@ -17,8 +17,10 @@
 #include <string>
 #include <vector>
 
+#include "absl/container/flat_hash_map.h"
+#include "absl/container/inlined_vector.h"
+#include "absl/types/span.h"
 #include "jwt_verify_lib/status.h"
-
 #include "openssl/ec.h"
 #include "openssl/evp.h"
 #include "openssl/pem.h"
@@ -63,10 +65,11 @@ class Jwks : public WithStatus {
     bssl::UniquePtr<BIO> bio_;
     bssl::UniquePtr<X509> x509_;
   };
-  typedef std::unique_ptr<Pubkey> PubkeyPtr;
+  typedef std::shared_ptr<Pubkey> PubkeyPtr;
+  typedef absl::InlinedVector<PubkeyPtr, 1> Pubkeys;
 
   // Access to list of Jwks
-  const std::vector<PubkeyPtr>& keys() const { return keys_; }
+  absl::Span<const PubkeyPtr> keys(absl::string_view kid = "") const;
 
  private:
   // Create Jwks
@@ -76,6 +79,12 @@ class Jwks : public WithStatus {
 
   // List of Jwks
   std::vector<PubkeyPtr> keys_;
+
+  // List of jwks without kid.
+  std::vector<PubkeyPtr> keys_no_kid_;
+
+  // Jwks map by the kid.
+  absl::flat_hash_map<std::string, Pubkeys> keys_by_kid_;
 };
 
 typedef std::unique_ptr<Jwks> JwksPtr;

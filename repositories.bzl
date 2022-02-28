@@ -1,6 +1,6 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-BORINGSSL_COMMIT = "107c03cf6d364939469194396bf7a6b2572d0f9c" # 2020-03-16, same as Envoy
+BORINGSSL_COMMIT = "107c03cf6d364939469194396bf7a6b2572d0f9c"  # 2020-03-16, same as Envoy
 BORINGSSL_SHA256 = "8ae14b52b7889cf92f3b107610b12afb5011506c77f90c7b3d4a36ed7283905a"
 
 def boringssl_repositories(bind = True):
@@ -72,6 +72,14 @@ def abseil_repositories(bind = True):
         native.bind(
             name = "abseil_flat_hash_map",
             actual = "@com_google_absl//absl/container:flat_hash_map",
+        )
+        native.bind(
+            name = "abseil_inlined_vector",
+            actual = "@com_google_absl//absl/container:inlined_vector",
+        )
+        native.bind(
+            name = "abseil_span",
+            actual = "@com_google_absl//absl/types:span",
         )
     _cctz_repositories(bind)
 

@@ -401,6 +401,18 @@ Status createFromX509(const ::google::protobuf::Struct& jwks_pb,
   return Status::Ok;
 }
 
+void updateJwksMap(absl::flat_hash_map<std::string, Jwks::Pubkeys>& keys_by_kid,
+                   std::vector<Jwks::PubkeyPtr>& keys_no_kid,
+                   const std::vector<Jwks::PubkeyPtr>& source_keys) {
+  for (const auto& jwk : source_keys) {
+    if (jwk->kid_.empty()) {
+      keys_no_kid.push_back(jwk);
+      continue;
+    }
+    keys_by_kid[jwk->kid_].push_back(jwk);
+  }
+}
+
 }  // namespace
 
 Status Jwks::addKeyFromPem(const std::string& pkey, const std::string& kid,
@@ -409,9 +421,23 @@ Status Jwks::addKeyFromPem(const std::string& pkey, const std::string& kid,
   if (tmp->getStatus() != Status::Ok) {
     return tmp->getStatus();
   }
+
+  updateJwksMap(keys_by_kid_, keys_no_kid_, tmp->keys_);
   keys_.insert(keys_.end(), std::make_move_iterator(tmp->keys_.begin()),
                std::make_move_iterator(tmp->keys_.end()));
   return Status::Ok;
+}
+
+absl::Span<const Jwks::PubkeyPtr> Jwks::keys(absl::string_view kid) const {
+  if (kid.empty()) {
+    return keys_;
+  }
+  auto iter = keys_by_kid_.find(kid);
+  if (iter != keys_by_kid_.end()) {
+    return {iter->second.data(), iter->second.size()};
+  }
+
+  return keys_no_kid_;
 }
 
 JwksPtr Jwks::createFrom(const std::string& pkey, Type type) {
@@ -426,6 +452,9 @@ JwksPtr Jwks::createFrom(const std::string& pkey, Type type) {
     default:
       break;
   }
+
+  keys->keys_by_kid_.clear();
+  updateJwksMap(keys->keys_by_kid_, keys->keys_no_kid_, keys->keys_);
   return keys;
 }
 
@@ -453,6 +482,9 @@ JwksPtr Jwks::createFromPem(const std::string& pkey, const std::string& kid,
   if (jwk->alg_ == "ES512") {
     jwk->crv_ = "P-521";
   }
+
+  ret->keys_by_kid_.clear();
+  updateJwksMap(ret->keys_by_kid_, ret->keys_no_kid_, ret->keys_);
   return ret;
 }
 
